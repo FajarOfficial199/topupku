@@ -8,6 +8,9 @@ function md5(text) {
     return crypto.createHash("md5").update(text).digest("hex");
 }
 
+const path = require("path");
+
+app.use(express.static(path.join(__dirname, "public")));
 // PROFILE
 app.get("/api/profile", async (req, res) => {
     try {
