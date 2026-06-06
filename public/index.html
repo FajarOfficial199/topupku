@@ -2,56 +2,83 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Topupku API Panel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Topupku Panel</title>
 
 <style>
-
 *{
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Segoe UI,sans-serif;
+font-family:Arial,sans-serif;
 }
 
 body{
 background:#0f172a;
-padding:20px;
 color:white;
+min-height:100vh;
+padding:20px;
 }
 
-.container{
-max-width:1000px;
-margin:auto;
-}
-
-.title{
+h1{
 text-align:center;
-margin-bottom:20px;
+margin-bottom:25px;
 }
 
-.title h1{
-font-size:32px;
+.menu{
+max-width:700px;
+margin:auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
 }
 
 .card{
 background:#1e293b;
 padding:20px;
 border-radius:15px;
+cursor:pointer;
+text-align:center;
+transition:.2s;
+}
+
+.card:hover{
+transform:scale(1.03);
+background:#334155;
+}
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.7);
+justify-content:center;
+align-items:center;
+}
+
+.modal-box{
+background:#1e293b;
+width:90%;
+max-width:500px;
+padding:20px;
+border-radius:15px;
+}
+
+.modal-box h2{
 margin-bottom:15px;
 }
 
-input,select{
+input{
 width:100%;
 padding:12px;
+margin:8px 0;
 border:none;
-outline:none;
 border-radius:10px;
 background:#334155;
 color:white;
-margin-top:8px;
-margin-bottom:15px;
 }
 
 button{
@@ -59,19 +86,232 @@ width:100%;
 padding:12px;
 border:none;
 border-radius:10px;
-background:#3b82f6;
-color:white;
-font-weight:bold;
 cursor:pointer;
+margin-top:10px;
 }
 
-button:hover{
+.submit{
 background:#2563eb;
+color:white;
 }
 
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
+.close{
+background:#dc2626;
+color:white;
+}
+
+pre{
+margin-top:20px;
+background:black;
+padding:15px;
+border-radius:10px;
+overflow:auto;
+color:#00ff66;
+}
+</style>
+
+</head>
+<body>
+
+<h1>🚀 TOPUPKU PANEL</h1>
+
+<div class="menu">
+
+<div class="card" onclick="openForm('profile')">
+👤 Profile
+</div>
+
+<div class="card" onclick="openForm('service')">
+🎮 Service
+</div>
+
+<div class="card" onclick="openForm('kategori')">
+📂 Kategori
+</div>
+
+<div class="card" onclick="openForm('order')">
+🛒 Order
+</div>
+
+<div class="card" onclick="openForm('status')">
+📋 Status
+</div>
+
+<div class="card" onclick="openForm('game')">
+🔍 Cek Nickname
+</div>
+
+<div class="card" onclick="openForm('payment')">
+💳 Deposit
+</div>
+
+<div class="card" onclick="openForm('status-payment')">
+💰 Status Deposit
+</div>
+
+</div>
+
+<div id="modal" class="modal">
+<div class="modal-box">
+
+<h2 id="title"></h2>
+
+<div id="formArea"></div>
+
+<button class="submit" onclick="submitForm()">
+Submit
+</button>
+
+<button class="close" onclick="closeForm()">
+Tutup
+</button>
+
+</div>
+</div>
+
+<pre id="result">
+Pilih menu terlebih dahulu...
+</pre>
+
+<script>
+
+let currentEndpoint = "";
+
+function openForm(endpoint){
+
+currentEndpoint = endpoint;
+
+const formArea =
+document.getElementById("formArea");
+
+document.getElementById("title")
+.innerText =
+endpoint.toUpperCase();
+
+let html = `
+<input id="api_id" placeholder="API ID">
+<input id="api_key" placeholder="API KEY">
+`;
+
+switch(endpoint){
+
+case "service":
+html += `
+<input id="filter_value"
+placeholder="Filter Value">
+`;
+break;
+
+case "order":
+html += `
+<input id="service_id"
+placeholder="Service ID">
+
+<input id="target_id"
+placeholder="Target ID">
+
+<input id="target_server"
+placeholder="Target Server">
+`;
+break;
+
+case "status":
+html += `
+<input id="order_id"
+placeholder="Order ID">
+`;
+break;
+
+case "game":
+html += `
+<input id="user_id"
+placeholder="User ID">
+
+<input id="zone_id"
+placeholder="Zone ID">
+
+<input id="code"
+placeholder="Game Code">
+`;
+break;
+
+case "payment":
+html += `
+<input id="reff_id"
+placeholder="Reff ID">
+
+<input id="kode_bank"
+placeholder="Kode Bank">
+
+<input id="nominal"
+placeholder="Nominal">
+`;
+break;
+
+case "status-payment":
+html += `
+<input id="reff_id"
+placeholder="Reff ID">
+`;
+break;
+
+}
+
+formArea.innerHTML = html;
+
+document.getElementById("modal")
+.style.display = "flex";
+
+}
+
+function closeForm(){
+document.getElementById("modal")
+.style.display = "none";
+}
+
+async function submitForm(){
+
+const data = {};
+
+document
+.querySelectorAll("#formArea input")
+.forEach(x => {
+if(x.value)
+data[x.id] = x.value;
+});
+
+const params =
+new URLSearchParams(data);
+
+document.getElementById("result")
+.textContent = "Loading...";
+
+try{
+
+const req = await fetch(
+`/api/${currentEndpoint}?${params}`
+);
+
+const json = await req.json();
+
+document.getElementById("result")
+.textContent =
+JSON.stringify(json,null,2);
+
+closeForm();
+
+}catch(err){
+
+document.getElementById("result")
+.textContent = err.message;
+
+}
+
+}
+</script>
+
+</body>
+</html>grid-template-columns:1fr 1fr;
 gap:15px;
 }
 
