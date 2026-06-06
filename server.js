@@ -1,7 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const crypto = require("crypto");
-
+const QRCode = require("qrcode");
 const app = express();
 
 function md5(text) {
@@ -30,7 +30,31 @@ app.get("/api/profile", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.get("/api/qrbuffer", async (req, res) => {
+    try {
 
+        const { qr } = req.query;
+
+        if (!qr) {
+            return res.json({
+                status: false,
+                msg: "Parameter qr kosong"
+            });
+        }
+
+        const buffer = await QRCode.toBuffer(qr);
+
+        res.setHeader("Content-Type", "image/png");
+        res.send(buffer);
+
+    } catch (err) {
+
+        res.status(500).json({
+            error: err.message
+        });
+
+    }
+});
 // SERVICE
 app.get("/api/service", async (req, res) => {
     try {
